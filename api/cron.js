@@ -16,14 +16,17 @@ function getFormattedDate(d = new Date().toString()) {
 	return `${year}-${month}-${day}`
 }
 
-const fileNamesSchema = new Schema({
+const fileLogSchema = new Schema({
 	id: Schema.ObjectId,
-	name: String,
+	name: {
+		type: String,
+		unique: true,
+	},
 	date: Date,
 	url: String,
 })
 
-const FileName = mongoose.model("fileName", fileNamesSchema)
+const FileLog = mongoose.model("filelogs", fileLogSchema)
 
 const fileScehma = new Schema({
 	id: Schema.ObjectId,
@@ -125,13 +128,6 @@ export default async function handler() {
 	console.log("LAST_UPDATE_DATE: ", lastUpdateDate)
 	console.log("LAST_UPDATE_DATE_FORMATTED: ", getFormattedDate(lastUpdateDate))
 
-	const fileNameRecord = new FileName()
-	fileNameRecord.name = currentUpdateFileDate
-	fileNameRecord.date = new Date()
-	fileNameRecord.url = fileLink
-	await fileNameRecord.save()
-	console.log("fileNameRecord", fileNameRecord)
-
 	const thisDaysFileNameCSV = `${currentUpdateFileDate}.csv`
 	const prevDaysFileNameCSV = `${lastUpdateFileDate}.csv`
 	console.log({ prevDaysFileNameCSV, thisDaysFileNameCSV })
@@ -155,7 +151,7 @@ export default async function handler() {
 	})
 		.select("name")
 		.exec()
-	if (newFileCheck.name === currentUpdateFileDate) {
+	if (newFileCheck?.name === currentUpdateFileDate) {
 		console.log(`
 File with name ${currentUpdateFileDate} already saved to MongoDB
 This could also mean that there is no update to CSV Source file 
@@ -262,7 +258,7 @@ Exiting Script!
 		thisDateFullObjs: Object.keys(thisDateFullObjs).length,
 	})
 
-	addedOrgNames.map(async (row) => {
+	const addedPromises = addedOrgNames.map(async (row) => {
 		const colNames = Object.keys(thisDateFullObjs[row])
 		const record = new Addition()
 		record.name = thisDateFullObjs[row][colNames[0]]
@@ -273,9 +269,10 @@ Exiting Script!
 		record.date = currentUpdateFileDate
 		await record.save()
 	})
+	await Promise.all(addedPromises)
 	console.log("All Additions Added to DB!")
 
-	removedOrgNames.map(async (row) => {
+	const removedPromises = removedOrgNames.map(async (row) => {
 		const colNames = Object.keys(prevDateFullObjs[row])
 		const record = new Removal()
 		record.name = prevDateFullObjs[row][colNames[0]]
@@ -286,6 +283,7 @@ Exiting Script!
 		record.date = currentUpdateFileDate
 		await record.save()
 	})
+	await Promise.all(removedPromises)
 	console.log("All Removals Added to DB!")
 
 	const updatedOrgsObjs = []
@@ -306,7 +304,7 @@ Exiting Script!
 	})
 	console.log("All Checked For Updates!")
 
-	updatedOrgsObjs.forEach(async (update) => {
+	const updatePromises = updatedOrgsObjs.map(async (update) => {
 		const colNames = Object.keys(update)
 		const record = new Updates()
 		record.name = update[colNames[0]]
@@ -317,5 +315,30 @@ Exiting Script!
 		record.date = currentUpdateFileDate
 		await record.save()
 	})
+	await Promise.all(updatePromises)
 	console.log("All Updates Added to DB!")
+
+	const thisFileLogRecord = new FileLog()
+	thisFileLogRecord.name = currentUpdateFileDate
+	thisFileLogRecord.date = new Date()
+	await thisFileLogRecord.save()
+	console.log("fileNameRecord", thisFileLogRecord)
+
+	console.log("Fetching Old FIles to Delete!")
+	const fileRecords = await File.find()
+		.sort({ date: -1 })
+		.select("name")
+		.skip(2)
+		.exec()
+
+	if (fileRecords?.length > 0) {
+		const filesToDelPromises = fileRecords.map(async (file) => {
+			await File.deleteOne({ name: file.name })
+		})
+		await Promise.all(filesToDelPromises)
+		console.log("Deleted Files: ", fileRecords)
+	} else {
+		console.log("No File to Delete!")
+		return
+	}
 }
