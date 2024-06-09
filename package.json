@@ -1,0 +1,26 @@
+{
+	"name": "csv-comparison",
+	"version": "1.0.0",
+	"main": "index.js",
+	"license": "MIT",
+	"scripts": {
+		"script": "node index.js",
+		"cron:test": "node ./src/cron.js",
+		"deploy": "vercel --prod"
+	},
+	"dependencies": {
+		"@vercel/blob": "^0.23.3",
+		"csv-parse": "^5.5.6",
+		"dotenv": "^16.4.5",
+		"express": "^4.19.2",
+		"gridfs-stream": "^1.1.1",
+		"mongodb": "^6.7.0",
+		"mongoose": "^8.4.1",
+		"node-html-parser": "^6.1.13"
+	},
+	"devDependencies": {
+		"nodemon": "^3.1.2",
+		"vercel": "^34.2.5"
+	},
+	"type": "module"
+}
