@@ -30,7 +30,7 @@ const fileScehma = new Schema({
 const File = mongoose.model("files", fileScehma)
 
 export default async function prerun() {
-	const fileName = "2024-06-03"
+	const fileName = "2024-06-10"
 	const fileNamePath = join(process.cwd(), "csv-files", `${fileName}.csv`)
 
 	await mongoose.connect(process.env.MONGO_CONNECTION)

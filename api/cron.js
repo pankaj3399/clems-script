@@ -5,6 +5,8 @@ import { parse as CSVParser } from "csv-parse/sync"
 import dotenv from "dotenv"
 import mongoose, { Schema, mongo } from "mongoose"
 
+export const maxDuration = 60
+
 dotenv.config()
 
 function getFormattedDate(d = new Date().toString()) {
@@ -167,7 +169,7 @@ Exiting Script!
 		await newFileRecord.save()
 
 		console.log("File saved to MongoDB!:", `${currentUpdateFileDate}.csv`)
-		console.log("File: ", newFileRecord)
+		// console.log("File: ", newFileRecord)
 	}
 
 	const currentUpdateCSVString = currentUpdateCSVFile
