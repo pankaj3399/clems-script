@@ -57,7 +57,7 @@ const additionSchema = new Schema({
 const Addition = mongoose.model("addition", additionSchema)
 
 // creating a mongo schema for today's csv data
-const updateSchema = new Schema({
+const eSchema = new Schema({
 	id: Schema.ObjectId,
 	name: String,
 	townCity: String,
@@ -214,15 +214,19 @@ Exiting Script!
 
 	let prevDateNames = new Set()
 	let thisDateNames = new Set()
+	let prevDateNamesLowerCased = new Set()
+	let thisDateNamesLowerCased = new Set()
 
 	thisDateCSVDataParsed.map((row) => {
 		if (row[orgNameCol]) {
 			thisDateNames.add(row[orgNameCol])
+			thisDateNamesLowerCased.add(String(row[orgNameCol]).toLowerCase())
 		}
 	})
 	prevDateCSVDataParsed.map((row) => {
 		if (row[orgNameCol]) {
 			prevDateNames.add(row[orgNameCol])
+			prevDateNamesLowerCased.add(String(row[orgNameCol]).toLowerCase())
 		}
 	})
 
@@ -231,10 +235,11 @@ Exiting Script!
 		thisDateColNames: thisDateNames.size,
 	})
 
-	const addedOrgNames = [...thisDateNames].filter((x) => !prevDateNames.has(x))
+	const addedOrgNames = [...thisDateNames].filter((x) => !prevDateNamesLowerCased.has(String(x).toLowerCase()))
 	const removedOrgNames = [...prevDateNames].filter(
-		(x) => !thisDateNames.has(x)
+		(x) => !thisDateNamesLowerCased.has(String(x).toLowerCase())
 	)
+
 
 	console.log(
 		`Values in ${lastUpdateFileDate} but not in ${currentUpdateFileDate}:`,
@@ -289,21 +294,42 @@ Exiting Script!
 	console.log("All Removals Added to DB!")
 
 	const updatedOrgsObjs = []
-	const colToCheckForUpdates = "Town/City"
+	// const colToCheckForUpdates = "Town/City"
+	const columnsToCheckForUpdates = ["Town/City", "County", "Type", "Route"];
 
 	Object.keys(thisDayOrgObjectsByName).forEach((orgName) => {
+		
+		const thisDayObj = thisDayOrgObjectsByName[orgName]
+
+		if(
+			prevDateNamesLowerCased.has(String(orgName).toLowerCase()) && 
+			!prevDateNames.has(orgName)
+
+		){
+			console.log("Updated: Name ", orgName, thisDayObj)
+			updatedOrgsObjs.push(thisDayObj)
+			return
+		}
+
 		const prevDayObj = prevDayOrgObjectsByName[orgName]
 		if (!prevDayObj) {
 			return
 		}
 
-		const thisDayObj = thisDayOrgObjectsByName[orgName]
+		for(let i = 0; i < columnsToCheckForUpdates.length; i++) {
+			const col = columnsToCheckForUpdates[i]
+			if (prevDayObj[col] !== thisDayObj[col]) {
+				console.log(`Updated: ${col}` , prevDayObj, thisDayObj)
+				updatedOrgsObjs.push(thisDayObj)
+				break;
+			}
+		}
 
 		// console.log("Checking: ", orgName)
-		if (prevDayObj[colToCheckForUpdates] !== thisDayObj[colToCheckForUpdates]) {
-			updatedOrgsObjs.push(thisDayObj)
-		}
-	})
+		// if (prevDayObj[colToCheckForUpdates] !== thisDayObj[colToCheckForUpdates]) {
+		// 	updatedOrgsObjs.push(thisDayObj)
+		// }
+	})	
 	console.log("All Checked For Updates!")
 
 	const updatePromises = updatedOrgsObjs.map(async (update) => {
