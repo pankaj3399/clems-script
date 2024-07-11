@@ -57,7 +57,7 @@ const additionSchema = new Schema({
 const Addition = mongoose.model("addition", additionSchema)
 
 // creating a mongo schema for today's csv data
-const eSchema = new Schema({
+const updateeSchema = new Schema({
 	id: Schema.ObjectId,
 	name: String,
 	townCity: String,
