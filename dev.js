@@ -356,7 +356,8 @@ export default async function handler() {
     .sort({ date: -1 })
     .select("name")
     .skip(2)
-    .exec();
+    .exec()
+    .allowDiskUse(true);
 
   if (fileRecords?.length > 0) {
     const filesToDelPromises = fileRecords.map(async (file) => {
