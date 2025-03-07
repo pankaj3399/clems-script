@@ -356,11 +356,10 @@ Exiting Script!
   console.log("Fetching Old FIles to Delete!");
   const fileRecords = await File.find()
     .sort({ date: -1 })
+    .allowDiskUse()
     .select("name")
     .skip(2)
-    .exec()
-    .allowDiskUse(true);
-
+    .exec();
   if (fileRecords?.length > 0) {
     const filesToDelPromises = fileRecords.map(async (file) => {
       await File.deleteOne({ name: file.name });
