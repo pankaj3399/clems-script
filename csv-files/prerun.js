@@ -8,15 +8,6 @@ import mongodb from "mongodb";
 
 dotenv.config();
 
-const fileNamesSchema = new Schema({
-  id: Schema.ObjectId,
-  name: String,
-  date: Date,
-  url: String,
-});
-
-const FileName = mongoose.model("fileName", fileNamesSchema);
-
 const fileScehma = new Schema({
   id: Schema.ObjectId,
   name: {
